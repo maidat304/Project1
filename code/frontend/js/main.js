@@ -112,6 +112,29 @@
     });
 
 
+    // Product details thumbnail carousel (thumbnails under single product)
+    $(".product__details__pic__slider").owlCarousel({
+        autoplay: false,
+        smartSpeed: 800,
+        center: false,
+        dots: false,
+        loop: false,
+        margin: 20,
+        nav : true,
+        navText : [
+            '<i class="bi bi-arrow-left"></i>',
+            '<i class="bi bi-arrow-right"></i>'
+        ],
+        responsiveClass: true,
+        responsive: {
+            0:{ items:3 },
+            576:{ items:4 },
+            768:{ items:4 },
+            992:{ items:4 }
+        }
+    });
+
+
     // Modal Video
     $(document).ready(function () {
         var $videoSrc;
@@ -258,3 +281,70 @@
     // setTimeout(() => { window.location = a.href; }, 120);
   }, false);
 })();
+
+/* Product detail: main image prev/next + thumbnail click behavior */
+(function($){
+    $(function(){
+        var $main = $('.main-image');
+        var $thumbs = $('.product__details__pic__slider img');
+
+        if (!$main.length || !$thumbs.length) return;
+
+        // Build gallery array from data-imgbigurl or src
+        var gallery = $thumbs.map(function(){
+            return $(this).data('imgbigurl') || $(this).attr('src');
+        }).get();
+
+        // current index: try to match main src to a gallery item, otherwise default to 0
+        var mainSrc = $main.attr('src');
+        var currentIndex = gallery.indexOf(mainSrc);
+        if (currentIndex === -1) {
+            currentIndex = 0;
+            // initialize main image to first gallery image for consistent behavior
+            $main.attr('src', gallery[0]);
+        }
+
+        function updateMain(i){
+            if (!gallery.length) return;
+            currentIndex = (i % gallery.length + gallery.length) % gallery.length;
+            $main.attr('src', gallery[currentIndex]);
+            // highlight thumbnail
+            $thumbs.closest('.item').removeClass('thumb-active');
+            $thumbs.eq(currentIndex).closest('.item').addClass('thumb-active');
+        }
+
+        // thumbnail click
+        $thumbs.on('click', function(e){
+            var idx = $thumbs.index(this);
+            updateMain(idx);
+        });
+
+        // prev / next buttons
+        $('.main-nav.prev').on('click', function(e){
+            e.preventDefault();
+            updateMain(currentIndex - 1);
+        });
+        $('.main-nav.next').on('click', function(e){
+            e.preventDefault();
+            updateMain(currentIndex + 1);
+        });
+
+        // initial highlight
+        $thumbs.eq(currentIndex).closest('.item').addClass('thumb-active');
+    });
+})(jQuery);
+
+$(document).ready(function(){
+  $(".product__details__pic__slider .item img").on("click", function(){
+    var bigImage = $(this).attr("data-imgbigurl"); // lấy link ảnh lớn
+    $(".main-image").attr("src", bigImage); // đổi src của ảnh chính
+  });
+
+  // Khởi tạo Owl Carousel nếu chưa có
+  $(".product__details__pic__slider").owlCarousel({
+    margin: 10,
+    nav: true,
+    dots: false,
+    items: 3
+  });
+});
